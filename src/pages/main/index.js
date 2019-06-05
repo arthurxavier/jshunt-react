@@ -1,25 +1,51 @@
 import React, { Component } from "react";
-import api from '../../services/api';
+import api from "../../services/api";
 
-import './styles.css'
+import "./styles.css";
 
-export default class Main extends Component{
+export default class Main extends Component {
   state = {
-    products: []
+    products: [],
+    productInfo: {},
+    currentlyPage: 1
   };
 
-  componentDidMount(){
+  componentDidMount() {
     this.loadProducts();
   }
 
-  loadProducts = async () => {
-    const response = await api.get('/products');
+  loadProducts = async (page = 1) => {
+    const response = await api.get(`/products?page=${page}`);
 
-    this.setState({products: response.data.docs});
+    const { docs, ...productInfo } = response.data;
+
+    // this.setState({products: docs, productInfo: productInfo});
+    //                                mesmo nome e mesma posição
+    this.setState({ products: docs, productInfo, currentlyPage: page });
   };
 
-  render(){
-    const { products } = this.state;
+  prevPage = () => {
+    const { currentlyPage, productInfo } = this.state;
+
+    if (currentlyPage === 1) return;
+
+    const pageNumber = currentlyPage - 1;
+
+    this.loadProducts(pageNumber);
+  };
+
+  nextPage = () => {
+    const { currentlyPage, productInfo } = this.state;
+
+    if (currentlyPage === productInfo.pages) return;
+
+    const pageNumber = currentlyPage + 1;
+
+    this.loadProducts(pageNumber);
+  };
+
+  render() {
+    const { products, currentlyPage, productInfo } = this.state;
 
     return (
       <div className="product-list">
@@ -28,10 +54,14 @@ export default class Main extends Component{
             <strong>{product.title}</strong>
             <p>{product.description}</p>
 
-            <a href=''>Acessar</a>
+            <a href="">Acessar</a>
           </article>
         ))}
+        <div className="actions">
+          <button disabled={currentlyPage === 1} onClick={this.prevPage}>Anterior</button>
+          <button disabled={currentlyPage === productInfo.pages} onClick={this.nextPage}>Próximo</button>
+        </div>
       </div>
-    )
+    );
   }
 }
